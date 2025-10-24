@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bibliothèque de procédés industriels — Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Bibliothèque de procédés industriels</h1>
+      <small class="subtitle">Prototype — Infographie & diagrammes</small>
+    </div>
+
+    <div class="actions">
+      <input id="search" placeholder="Recherche (titre, description, étapes)..." aria-label="Recherche" />
+      <select id="filterCategory" aria-label="Filtrer par catégorie"><option value="">Toutes catégories</option></select>
+      <button id="btnNew">Nouveau procédé</button>
+      <button id="btnExport">Exporter JSON</button>
+      <button id="btnExportPdf">Exporter PDF</button>
+      <label class="import-label" title="Importer JSON">
+        Importer JSON
+        <input id="importFile" type="file" accept="application/json" />
+      </label>
+    </div>
+  </header>
+
+  <main id="homePanel" class="home-panel" role="main" aria-live="polite">
+    <section class="hero">
+      <div class="hero-content">
+        <h2>Bienvenue dans la bibliothèque de procédés industriels</h2>
+        <p class="lead">Centralisez et visualisez vos fiches de procédés. Cliquez sur une étape pour voir le diagramme et les détails.</p>
+        <div class="hero-actions">
+          <button id="btnGoProcesses" class="cta">Voir les procédés</button>
+          <button id="btnGoNew" class="cta secondary">Créer un procédé</button>
+        </div>
+      </div>
+      <div class="hero-illustration" aria-hidden="true">
+        <svg width="240" height="140" viewBox="0 0 240 140">
+          <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#6f42c1"/><stop offset="1" stop-color="#0ea5b7"/></linearGradient></defs>
+          <rect x="4" y="10" rx="12" width="220" height="120" fill="url(#g1)" opacity="0.12"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="home-grid-section">
+      <h3>Procédés récents</h3>
+      <div id="homeCards" class="cards-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="features">
+      <h3>Fonctionnalités clés</h3>
+      <ul>
+        <li>Timeline infographique (étapes + pictogrammes)</li>
+        <li>Diagramme étape‑par‑étape — cliquez pour voir plus de détails</li>
+        <li>Export JSON & PDF (infographie incluse)</li>
+      </ul>
+    </section>
+  </main>
+
+  <main id="appPanel" class="container hidden" role="application">
+    <aside class="list" aria-label="Liste des procédés">
+      <h2>Procédés</h2>
+      <ul id="processList" class="process-list" tabindex="0"></ul>
+    </aside>
+
+    <section class="detail" id="detailPanel" aria-live="polite">
+      <h2>Détails</h2>
+      <div id="detailContent" class="detail-content">Sélectionne un procédé pour voir les détails.</div>
+    </section>
+  </main>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3 id="modalTitle">Nouvel élément</h3>
+        <button id="closeModal" class="close-btn" aria-label="Fermer">&times;</button>
+      </header>
+      <form id="editorForm" class="editor-form">
+        <input type="hidden" id="procId" />
+        <div class="form-grid">
+          <label>Titre<input id="title" required /></label>
+          <label>Industrie<input id="industry" placeholder="ex: agroalimentaire" /></label>
+          <label>Statut
+            <select id="status">
+              <option value="draft">draft</option>
+              <option value="published">published</option>
+              <option value="archived">archived</option>
+            </select>
+          </label>
+          <label>Version<input id="version" type="number" min="1" value="1" /></label>
+        </div>
+
+        <label>Description<textarea id="shortDescription" rows="3"></textarea></label>
+        <label>Catégories (séparées par ,)<input id="categories" /></label>
+        <label>Mots-clés (séparés par ,)<input id="keywords" /></label>
+
+        <div class="form-grid-full">
+          <label>Contrôles Qualité (JSON)
+            <textarea id="qualityControls" rows="3" placeholder="[ { &quot;name&quot;: &quot;...&quot;, &quot;method&quot;: &quot;...&quot; } ]"></textarea>
+          </label>
+          <label>KPIs (JSON)
+            <textarea id="kpis" rows="3" placeholder="[ { &quot;name&quot;: &quot;...&quot;, &quot;target&quot;: &quot;...&quot; } ]"></textarea>
+          </label>
+          <label>Risques (JSON)
+            <textarea id="risks" rows="3" placeholder="[ { &quot;hazard&quot;: &quot;...&quot;, &quot;mitigation&quot;: &quot;...&quot; } ]"></textarea>
+          </label>
+        </div>
+        <fieldset class="steps-fieldset">
+          <legend>Étapes (avec détails)</legend>
+          <div id="stepsContainer" class="repeater"></div>
+          <button type="button" id="addStepBtn" class="secondary">+ Ajouter une étape</button>
+          <small class="hint">Les champs Paramètres et SOP utilisent le format JSON. Les équipements Specs/Checklist sont du texte simple.</small>
+        </fieldset>
+
+        <div class="modal-actions">
+          <button type="submit" id="saveBtn">Enregistrer</button>
+          <button type="button" id="publishBtn">Publier (version++)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">Prototype — stockage local (localStorage). Export/Import JSON & PDF disponibles.</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
